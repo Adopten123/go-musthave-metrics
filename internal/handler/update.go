@@ -3,28 +3,15 @@ package handler
 import (
 	"net/http"
 	"strconv"
-	"strings"
-)
 
-type MetricStorage interface {
-	UpdateGauge(name string, value float64)
-	UpdateCounter(name string, value int64)
-}
+	"github.com/go-chi/chi/v5"
+)
 
 func UpdateHandler(s MetricStorage) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
-			w.WriteHeader(http.StatusMethodNotAllowed)
-			return
-		}
-
-		parts := strings.Split(r.URL.Path, "/")
-		if len(parts) != 5 {
-			w.WriteHeader(http.StatusNotFound)
-			return
-		}
-
-		mType, mName, mValue := parts[2], parts[3], parts[4]
+		mType := chi.URLParam(r, "type")
+		mName := chi.URLParam(r, "name")
+		mValue := chi.URLParam(r, "value")
 
 		if mName == "" || mValue == "" {
 			w.WriteHeader(http.StatusNotFound)
