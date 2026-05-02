@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"net/http"
+	"os"
 
 	"github.com/Adopten123/go-musthave-metrics/internal/handler"
 	"github.com/Adopten123/go-musthave-metrics/internal/storage"
@@ -12,8 +13,11 @@ import (
 func main() {
 	var flagRunAddr string
 	flag.StringVar(&flagRunAddr, "a", "localhost:8080", "address and port to run server")
-
 	flag.Parse()
+
+	if envRunAddr := os.Getenv("ADDRESS"); envRunAddr != "" {
+		flagRunAddr = envRunAddr
+	}
 
 	s := storage.NewMemStorage()
 	r := chi.NewRouter()
@@ -23,7 +27,6 @@ func main() {
 	r.Get("/", handler.AllMetricsHandler(s))
 
 	err := http.ListenAndServe(flagRunAddr, r)
-
 	if err != nil {
 		panic(err)
 	}
