@@ -5,18 +5,16 @@ import (
 	"net/http"
 )
 
-func SendMetrics(s *AgentStorage) {
-	baseURL := "http://localhost:8080/update"
-
+func SendMetrics(storage *AgentStorage, serverAddr string) {
 	client := &http.Client{}
 
-	for name, value := range s.Gauges {
-		url := fmt.Sprintf("%s/gauge/%s/%f", baseURL, name, value)
+	for name, value := range storage.Gauges {
+		url := fmt.Sprintf("http://%s/update/gauge/%s/%f", serverAddr, name, value)
 		sendPOST(client, url)
 	}
 
-	for name, value := range s.Counters {
-		url := fmt.Sprintf("%s/counter/%s/%d", baseURL, name, value)
+	for name, value := range storage.Counters {
+		url := fmt.Sprintf("http://%s/update/counter/%s/%d", serverAddr, name, value)
 		sendPOST(client, url)
 	}
 }
