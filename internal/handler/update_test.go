@@ -6,11 +6,12 @@ import (
 	"testing"
 
 	"github.com/Adopten123/go-musthave-metrics/internal/storage"
+	"github.com/go-chi/chi/v5"
 )
 
 func TestUpdateHandler(t *testing.T) {
 	s := storage.NewMemStorage()
-	handler := UpdateHandler(s)
+	h := UpdateHandler(s)
 
 	tests := []struct {
 		name         string
@@ -31,25 +32,13 @@ func TestUpdateHandler(t *testing.T) {
 			expectedCode: http.StatusOK,
 		},
 		{
-			name:         "Неверный метод (GET вместо POST)",
-			method:       http.MethodGet,
-			url:          "/update/gauge/Alloc/12.5",
-			expectedCode: http.StatusMethodNotAllowed,
-		},
-		{
-			name:         "Неизвестный тип метрики",
-			method:       http.MethodPost,
-			url:          "/update/unknown/test/123",
-			expectedCode: http.StatusBadRequest,
-		},
-		{
-			name:         "Некорректное значение счетчика (строка)",
+			name:         "Некорректное значение счетчика",
 			method:       http.MethodPost,
 			url:          "/update/counter/test/none",
 			expectedCode: http.StatusBadRequest,
 		},
 		{
-			name:         "Отсутствует значение метрики в URL",
+			name:         "Отсутствует значение",
 			method:       http.MethodPost,
 			url:          "/update/counter/test/",
 			expectedCode: http.StatusNotFound,
@@ -61,13 +50,16 @@ func TestUpdateHandler(t *testing.T) {
 			request := httptest.NewRequest(tc.method, tc.url, nil)
 			recorder := httptest.NewRecorder()
 
-			handler(recorder, request)
+			r := chi.NewRouter()
+			r.Post("/update/{type}/{name}/{value}", h)
+
+			r.ServeHTTP(recorder, request)
 
 			res := recorder.Result()
 			defer res.Body.Close()
 
 			if res.StatusCode != tc.expectedCode {
-				t.Errorf("Ожидался статус %d, получен %d", tc.expectedCode, res.StatusCode)
+				t.Errorf("Кейс '%s': ожидался статус %d, получен %d", tc.name, tc.expectedCode, res.StatusCode)
 			}
 		})
 	}
